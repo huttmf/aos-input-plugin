@@ -608,24 +608,24 @@ func (aos *Aos) Description() string {
 func (aos *Aos) SampleConfig() string {
 	return `
 
-		# TCP Port to listen for incoming sessions from the AOS Server
-	  port = 7777										# mandatory
+  ## TCP Port to listen for incoming sessions from the AOS Server.
+  port = 7777
 
-	  # Address of the server running Telegraf, it needs to be reacheable from AOS
-	  address = 192.168.59.1				# mandatory
+  ## Address of the server running Telegraf, it needs to be reacheable from AOS
+  address = 192.168.59.1
 
-		# Interval to refresh content from the AOS server (in sec)
-		refresh_interval = 30					# Default 30
+  ## Interval to refresh content from the AOS server (in sec)
+  # refresh_interval = 30
 
-	  # Streaming Type Can be "perfmon", "alerts" or "events"
-	  streaming_type = [ "events" ]
+  ## Streaming Type Can be "perfmon", "alerts" or "events".
+  streaming_type = [ "perfmon", "alerts" ]
 
-	  # Define parameter to join the AOS Server using the REST API
-	  aos_server = 192.168.59.250		# mandatory
-	  aos_port = 8888								# Default 8888
-	  aos_login = admin							# Default admin
-	  aos_password = admin					# Default admin
-		aos_protocol = https					# Default https
+  ## Define parameter to join the AOS Server using the REST API
+  aos_server = 192.168.59.250
+  aos_port = 8888
+  aos_login = admin
+  aos_password = admin
+  aos_protocol = https
 `
 }
 
