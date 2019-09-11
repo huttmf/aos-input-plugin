@@ -1,11 +1,12 @@
 package aos_test
 
 import (
+	"testing"
+
 	"github.com/influxdata/telegraf/plugins/inputs/aos"
 	"github.com/influxdata/telegraf/plugins/inputs/aos/aos_streaming"
 	"github.com/influxdata/telegraf/testutil"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestExtractProbeMessage(t *testing.T) {

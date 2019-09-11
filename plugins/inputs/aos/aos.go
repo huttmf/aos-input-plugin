@@ -9,11 +9,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/influxdata/telegraf"
-	"github.com/influxdata/telegraf/plugins/inputs"
-	"github.com/influxdata/telegraf/plugins/inputs/aos/aos_streaming"
-	"github.com/influxdata/telegraf/plugins/inputs/aos/restapi"
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,6 +16,12 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/influxdata/telegraf"
+	"github.com/influxdata/telegraf/plugins/inputs"
+	"github.com/influxdata/telegraf/plugins/inputs/aos/aos_streaming"
+	"github.com/influxdata/telegraf/plugins/inputs/aos/restapi"
 )
 
 // ----------------------------------------------------------------
