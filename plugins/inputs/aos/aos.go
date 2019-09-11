@@ -6,21 +6,21 @@
 package aos
 
 import (
-	"io"
-	"io/ioutil"
-	"log"
-	"net"
 	"bytes"
-	"strings"
-	"reflect"
-	"fmt"
-	"time"
 	"encoding/binary"
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
 	"github.com/influxdata/telegraf/plugins/inputs/aos/aos_streaming"
 	"github.com/influxdata/telegraf/plugins/inputs/aos/restapi"
+	"io"
+	"io/ioutil"
+	"log"
+	"net"
+	"reflect"
+	"strings"
+	"time"
 )
 
 // ----------------------------------------------------------------
@@ -61,19 +61,21 @@ func (ssl *StreamAos) extractEventData(eventType string, tags map[string]string,
 
 	for i := 0; i < myEventDataValue.NumField(); i++ {
 		myField := myEventDataValue.Field(i)
-		if (myField.IsNil()) {
+		if myField.IsNil() {
 			continue
 		}
 		field_name := propDataType.Prop[i].OrigName
 
 		// Skip field with XXX_
-		if strings.Contains(field_name, "XXX_") {	continue }
+		if strings.Contains(field_name, "XXX_") {
+			continue
+		}
 
 		if propDataType.Prop[i].Enum != "" {
-			field_value := fmt.Sprintf("%v", myField.Elem().Interface().(fmt.Stringer).String() )
+			field_value := fmt.Sprintf("%v", myField.Elem().Interface().(fmt.Stringer).String())
 			tags[field_name] = field_value
 		} else {
-			field_value := fmt.Sprintf("%v", reflect.Indirect(myField).Interface() )
+			field_value := fmt.Sprintf("%v", reflect.Indirect(myField).Interface())
 			tags[field_name] = field_value
 		}
 	}
@@ -98,19 +100,21 @@ func (ssl *StreamAos) ExtractAlertData(alertType string, tags map[string]string,
 
 	for i := 0; i < myAlertDataValue.NumField(); i++ {
 		myField := myAlertDataValue.Field(i)
-		if (myField.IsNil()) {
+		if myField.IsNil() {
 			continue
 		}
 		field_name := propDataType.Prop[i].OrigName
 
 		// Skip field with XXX_
-		if strings.Contains(field_name, "XXX_") {	continue }
+		if strings.Contains(field_name, "XXX_") {
+			continue
+		}
 
 		if propDataType.Prop[i].Enum != "" {
-			field_value := fmt.Sprintf("%v", myField.Elem().Interface().(fmt.Stringer).String() )
+			field_value := fmt.Sprintf("%v", myField.Elem().Interface().(fmt.Stringer).String())
 			tags[field_name] = field_value
 		} else {
-			field_value := fmt.Sprintf("%v", reflect.Indirect(myField).Interface() )
+			field_value := fmt.Sprintf("%v", reflect.Indirect(myField).Interface())
 			tags[field_name] = field_value
 		}
 	}
@@ -123,7 +127,7 @@ func (ssl *StreamAos) GetTags(deviceKey string) map[string]string {
 
 	// search for :: in string and split if found
 	if strings.Contains(deviceKey, "::") {
-		devInt := strings.Split(deviceKey,  "::")
+		devInt := strings.Split(deviceKey, "::")
 		deviceKey = devInt[0]
 		tags["interface"] = devInt[1]
 	}
@@ -139,7 +143,9 @@ func (ssl *StreamAos) GetTags(deviceKey string) map[string]string {
 
 		if system.Status.BlueprintId != "" {
 			blueprint := ssl.Aos.api.GetBlueprintById(system.Status.BlueprintId)
-			if blueprint != nil { tags["blueprint"] = blueprint.Name }
+			if blueprint != nil {
+				tags["blueprint"] = blueprint.Name
+			}
 		}
 
 		if system.Blueprint.Name != "" {
@@ -164,16 +170,20 @@ func (ssl *StreamAos) ExtractProbeData(newProbeMessage interface{}, originName s
 
 	serie := "probe_message"
 	fields := make(map[string]interface{})
-	tags := ssl.GetTags( originName )
+	tags := ssl.GetTags(originName)
 
 	for i := 0; i < myValue.NumField(); i++ {
 		myField := myValue.Field(i)
 		field_name := propType.Prop[i].OrigName
 
-		if strings.Contains(field_name, "XXX_") { continue }
+		if strings.Contains(field_name, "XXX_") {
+			continue
+		}
 
 		temp := reflect.Indirect(myField)
-		if temp == reflect.ValueOf(nil) { continue }
+		if temp == reflect.ValueOf(nil) {
+			continue
+		}
 		fields[field_name] = temp.Interface()
 	}
 
@@ -257,19 +267,21 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 
 				serie := "interface_counters"
 				fields := make(map[string]interface{})
-				tags := ssl.GetTags( originName )
+				tags := ssl.GetTags(originName)
 
 				// tags["interface"] = devInt
 
 				for i := 0; i < myValue.NumField(); i++ {
 
-						myField := myValue.Field(i)
-						field_name := propType.Prop[i].OrigName
+					myField := myValue.Field(i)
+					field_name := propType.Prop[i].OrigName
 
-						// Skip field with XXX_
-						if strings.Contains(field_name, "XXX_") {	continue	}
+					// Skip field with XXX_
+					if strings.Contains(field_name, "XXX_") {
+						continue
+					}
 
-						fields[propType.Prop[i].OrigName] = reflect.Indirect(myField).Interface()
+					fields[propType.Prop[i].OrigName] = reflect.Indirect(myField).Interface()
 				}
 
 				ssl.Aos.Accumulator.AddFields(serie, fields, tags)
@@ -286,60 +298,66 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 
 				if systemInfo != nil {
 
+					// Prepare value. type and property
+					myValue := reflect.ValueOf(systemInfo).Elem()
+					myType := myValue.Type()
+					propType := proto.GetProperties(myType)
+
+					serie := "system_info"
+					fields := make(map[string]interface{})
+					tags := ssl.GetTags(originName)
+
+					for i := 0; i < myValue.NumField(); i++ {
+						myField := myValue.Field(i)
+						field_name := propType.Prop[i].OrigName
+
+						// Skip field with XXX_
+						if strings.Contains(field_name, "XXX_") {
+							continue
+						}
+
+						fields[field_name] = reflect.Indirect(myField).Interface()
+					}
+
+					ssl.Aos.Accumulator.AddFields(serie, fields, tags)
+				}
+
+				if processInfo != nil {
+
+					for _, p := range processInfo {
+
 						// Prepare value. type and property
-						myValue := reflect.ValueOf(systemInfo).Elem()
-					  myType := myValue.Type()
+						myValue := reflect.ValueOf(p).Elem()
+						myType := myValue.Type()
 						propType := proto.GetProperties(myType)
 
-						serie := "system_info"
+						// Get Process Name
+
+						process_name := p.ProcessName
+
+						serie := "process_info"
 						fields := make(map[string]interface{})
-						tags := ssl.GetTags( originName )
+						tags := ssl.GetTags(originName)
+
+						tags["process_name"] = *process_name
 
 						for i := 0; i < myValue.NumField(); i++ {
 							myField := myValue.Field(i)
 							field_name := propType.Prop[i].OrigName
 
-							// Skip field with XXX_
-							if strings.Contains(field_name, "XXX_") {	continue }
+							// Skip field with XXX_ and process_name
+							if strings.Contains(field_name, "XXX_") {
+								continue
+							}
+							if strings.Contains(field_name, "process_name") {
+								continue
+							}
 
 							fields[field_name] = reflect.Indirect(myField).Interface()
 						}
 
 						ssl.Aos.Accumulator.AddFields(serie, fields, tags)
-				}
-
-				if processInfo != nil {
-
-						for _, p := range processInfo {
-
-							// Prepare value. type and property
-							myValue := reflect.ValueOf(p).Elem()
-							myType := myValue.Type()
-							propType := proto.GetProperties(myType)
-
-							// Get Process Name
-
-							process_name := p.ProcessName
-
-							serie := "process_info"
-							fields := make(map[string]interface{})
-							tags := ssl.GetTags( originName )
-
-							tags["process_name"] = *process_name
-
-							for i := 0; i < myValue.NumField(); i++ {
-								myField := myValue.Field(i)
-								field_name := propType.Prop[i].OrigName
-
-								// Skip field with XXX_ and process_name
-								if strings.Contains(field_name, "XXX_") {	continue }
-								if strings.Contains(field_name, "process_name") {	continue }
-
-								fields[field_name] = reflect.Indirect(myField).Interface()
-							}
-
-							ssl.Aos.Accumulator.AddFields(serie, fields, tags)
-				    }
+					}
 				}
 
 				if fileInfo != nil {
@@ -351,7 +369,7 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 
 						serie := "file_info"
 						fields := make(map[string]interface{})
-						tags := ssl.GetTags( originName )
+						tags := ssl.GetTags(originName)
 
 						tags["file_name"] = *file_name
 						fields["size"] = *file_size
@@ -361,43 +379,42 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 				}
 			}
 
-
 			if newProbeMessage != nil {
-				ssl.ExtractProbeData( newProbeMessage, originName)
+				ssl.ExtractProbeData(newProbeMessage, originName)
 			}
 
 			if newGenericPerfMon != nil {
 
 				serie := "perfmon_generic_undefined"
 				fields := make(map[string]interface{})
-				tags := ssl.GetTags( originName )
+				tags := ssl.GetTags(originName)
 
 				for _, t := range newGenericPerfMon.GetTags() {
-					  tName := t.GetName()
-						tValue := t.GetValue()
+					tName := t.GetName()
+					tValue := t.GetValue()
 
-						myValueOfName := reflect.ValueOf(tValue).Elem()
-						myType := myValueOfName.Type().String()
+					myValueOfName := reflect.ValueOf(tValue).Elem()
+					myType := myValueOfName.Type().String()
 
-						// Intercept the special tag "data_type"
-						if tName == "data_type" {
-							serie = t.GetStringValue()
-							continue
-						}
+					// Intercept the special tag "data_type"
+					if tName == "data_type" {
+						serie = t.GetStringValue()
+						continue
+					}
 
-						switch myType {
-						case "aos_streaming.Tag_StringValue":
-								// tNameStr := t.GetStringValue()
-								tags[tName] = t.GetStringValue()
-								//fmt.Printf("  tag - %v - %v\n", tName, tNameStr )
-						case "aos_streaming.Tag_FloatValue":
-								// tNameFloat := t.GetFloatValue()
-								log.Printf("W! Perfmon Generic - Tag can only be of type String, %v is type Float", tName)
+					switch myType {
+					case "aos_streaming.Tag_StringValue":
+						// tNameStr := t.GetStringValue()
+						tags[tName] = t.GetStringValue()
+						//fmt.Printf("  tag - %v - %v\n", tName, tNameStr )
+					case "aos_streaming.Tag_FloatValue":
+						// tNameFloat := t.GetFloatValue()
+						log.Printf("W! Perfmon Generic - Tag can only be of type String, %v is type Float", tName)
 
-						case "aos_streaming.Tag_Int64Value":
-								// tNameInt := t.GetInt64Value()
-								log.Printf("W! Perfmon Generic - Tag can only be of type String, %v is type Int64", tName)
-						}
+					case "aos_streaming.Tag_Int64Value":
+						// tNameInt := t.GetInt64Value()
+						log.Printf("W! Perfmon Generic - Tag can only be of type String, %v is type Int64", tName)
+					}
 				}
 				for _, f := range newGenericPerfMon.GetFields() {
 					fName := f.GetName()
@@ -410,11 +427,11 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 					case "aos_streaming.Field_FloatValue":
 						fields[fName] = f.GetFloatValue()
 					case "aos_streaming.Field_Int64Value":
-						fields[fName] =  f.GetInt64Value()
+						fields[fName] = f.GetInt64Value()
 					case "aos_streaming.Field_StringValue":
 						log.Printf("W! Perfmon Generic - Field %v can't be of type String, must be Float of Int64", fName)
 						// fields[fName] =  f.GetStringValue()
-							// fmt.Printf("  fields - %v - %v\n", fName, fValueStr )
+						// fmt.Printf("  fields - %v - %v\n", fName, fValueStr )
 					}
 				}
 
@@ -433,45 +450,45 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 
 			eventTypeName := propType.Prop[0].OrigName
 
-			tags := ssl.GetTags( originName )
+			tags := ssl.GetTags(originName)
 
 			switch eventTypeName {
 			case "device_state":
-					myEventData := newEvent.GetDeviceState()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetDeviceState()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "streaming":
-					myEventData := newEvent.GetStreaming()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetStreaming()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "cable_peer":
-					myEventData := newEvent.GetCablePeer()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetCablePeer()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "bgp_neighbor":
-					myEventData := newEvent.GetBgpNeighbor()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetBgpNeighbor()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "link_status":
-					myEventData := newEvent.GetLinkStatus()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetLinkStatus()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "traffic":
-					myEventData := newEvent.GetTraffic()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetTraffic()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "mac_state":
-					myEventData := newEvent.GetMacState()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetMacState()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "arp_state":
-					myEventData := newEvent.GetArpState()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetArpState()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "lag_state":
-					myEventData := newEvent.GetLagState()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetLagState()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "mlag_state":
-					myEventData := newEvent.GetMlagState()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetMlagState()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "extensible_event":
-					myEventData := newEvent.GetExtensibleEvent()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetExtensibleEvent()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 			case "route_state":
-					myEventData := newEvent.GetRouteState()
-					ssl.extractEventData( eventTypeName, tags, myEventData)
+				myEventData := newEvent.GetRouteState()
+				ssl.extractEventData(eventTypeName, tags, myEventData)
 
 			default:
 				log.Printf("W! Event Type - %s, not supported yet", eventTypeName)
@@ -486,7 +503,7 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 
 			alertTypeName := propAlertType.Prop[0].OrigName
 
-			tags := ssl.GetTags( originName )
+			tags := ssl.GetTags(originName)
 
 			tags["severity"] = fmt.Sprintf("%v", newAlert.Severity)
 			// tags["first_seen"] = fmt.Sprintf("%v", newAlert.FirstSeen)
@@ -495,68 +512,68 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 
 			switch alertTypeName {
 			case "config_deviation_alert":
-					myAlertData := newAlert.GetConfigDeviationAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetConfigDeviationAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "streaming_alert":
-					myAlertData := newAlert.GetStreamingAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetStreamingAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "cable_peer_mismatch_alert":
-					myAlertData := newAlert.GetCablePeerMismatchAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetCablePeerMismatchAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "bgp_neighbor_mismatch_alert":
-					myAlertData := newAlert.GetBgpNeighborMismatchAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetBgpNeighborMismatchAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "interface_link_status_mismatch_alert":
-					myAlertData := newAlert.GetInterfaceLinkStatusMismatchAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetInterfaceLinkStatusMismatchAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "hostname_alert":
-					myAlertData := newAlert.GetHostnameAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetHostnameAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "route_alert":
-					myAlertData := newAlert.GetRouteAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetRouteAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "liveness_alert":
-					myAlertData := newAlert.GetLivenessAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetLivenessAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "deployment_alert":
-					myAlertData := newAlert.GetDeploymentAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetDeploymentAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "blueprint_rendering_alert":
-					myAlertData := newAlert.GetBlueprintRenderingAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetBlueprintRenderingAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "counters_alert":
-					myAlertData := newAlert.GetCountersAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetCountersAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "mac_alert":
-					myAlertData := newAlert.GetMacAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetMacAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "arp_alert":
-					myAlertData := newAlert.GetArpAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetArpAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "headroom_alert":
-					myAlertData := newAlert.GetHeadroomAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetHeadroomAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "lag_alert":
-					myAlertData := newAlert.GetLagAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetLagAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "mlag_alert":
-					myAlertData := newAlert.GetMlagAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetMlagAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "probe_alert":
-					myAlertData := newAlert.GetProbeAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetProbeAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "config_mismatch_alert":
-					myAlertData := newAlert.GetConfigMismatchAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetConfigMismatchAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "extensible_alert":
-					myAlertData := newAlert.GetExtensibleAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetExtensibleAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 			case "test_alert":
-					myAlertData := newAlert.GetTestAlert()
-					ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
+				myAlertData := newAlert.GetTestAlert()
+				ssl.ExtractAlertData(alertTypeName, tags, myAlertData, raise)
 
 			default:
-					log.Printf("W! Alert Type - %s, Not Supported Yet", alertTypeName )
+				log.Printf("W! Alert Type - %s, Not Supported Yet", alertTypeName)
 			}
 		}
 	}
@@ -566,19 +583,19 @@ func (ssl *StreamAos) MsgReader(r io.Reader) {
 // Aos "Class"
 // ----------------------------------------------------------------
 type Aos struct {
-	Port 						int
-	Address					string
-	StreamingType 	[]string
+	Port          int
+	Address       string
+	StreamingType []string
 
-	AosServer 			string
-	AosPort					int
-	AosLogin				string
-	AosPassword 		string
-	AosProtocol 		string
+	AosServer   string
+	AosPort     int
+	AosLogin    string
+	AosPassword string
+	AosProtocol string
 
-	RefreshInterval	int
+	RefreshInterval int
 
-	api 				*aosrestapi.AosServerApi
+	api *aosrestapi.AosServerApi
 	telegraf.Accumulator
 	io.Closer
 }
@@ -615,28 +632,26 @@ func (aos *Aos) Gather(_ telegraf.Accumulator) error {
 	return nil
 }
 
-
 // Continuous Query that will refresh data every 15 sec
 func (aos *Aos) RefreshData() {
 
-    for {
-      time.Sleep(time.Duration(aos.RefreshInterval) * time.Second)
+	for {
+		time.Sleep(time.Duration(aos.RefreshInterval) * time.Second)
 
-			// log.Printf("D! Will Collect Blueprints Information")
-      aos.api.GetBlueprints()
+		// log.Printf("D! Will Collect Blueprints Information")
+		aos.api.GetBlueprints()
 
-			// log.Printf("D! Will Collect Systems Information")
-      aos.api.GetSystems()
+		// log.Printf("D! Will Collect Systems Information")
+		aos.api.GetSystems()
 
-      log.Printf("D! Finished to Refresh Data, will sleep for %v sec", aos.RefreshInterval)
-    }
+		log.Printf("D! Finished to Refresh Data, will sleep for %v sec", aos.RefreshInterval)
+	}
 }
-
 
 func (aos *Aos) Start(acc telegraf.Accumulator) error {
 	aos.Accumulator = acc
 
-	log.Printf("D! Starting input:aos, will connect to AOS server %v:%v ", aos.AosServer, aos.AosPort )
+	log.Printf("D! Starting input:aos, will connect to AOS server %v:%v ", aos.AosServer, aos.AosPort)
 
 	// --------------------------------------------
 	// Open Session to Rest API
@@ -647,24 +662,28 @@ func (aos *Aos) Start(acc telegraf.Accumulator) error {
 	if err != nil {
 		log.Printf("W! Error %+v", err)
 	} else {
-		log.Printf("I! Session to AOS server Opened on %v://%v:%v", aos.AosProtocol, aos.AosServer, aos.AosPort )
+		log.Printf("I! Session to AOS server Opened on %v://%v:%v", aos.AosProtocol, aos.AosServer, aos.AosPort)
 	}
 
 	// --------------------------------------------
 	// Collect Blueprint and System info
 	// --------------------------------------------
 	err = aos.api.GetBlueprints()
-	if err != nil {  log.Printf("W! Error fetching GetBlueprints: %v", err)  }
+	if err != nil {
+		log.Printf("W! Error fetching GetBlueprints: %v", err)
+	}
 
 	err = aos.api.GetSystems()
-	if err != nil {  log.Printf("W! Error fetching GetSystems: %v", err)  }
+	if err != nil {
+		log.Printf("W! Error fetching GetSystems: %v", err)
+	}
 
 	for _, system := range aos.api.Systems {
 
 		if system.Status.BlueprintId != "" {
 			log.Printf("I! Id: %v - %v %s | %v", system.DeviceKey, system.UserConfig.AdminState, system.Status.BlueprintId, system.Blueprint.Role)
 		} else {
-			log.Printf("I! Id: %v - %v", system.DeviceKey, system.UserConfig.AdminState )
+			log.Printf("I! Id: %v - %v", system.DeviceKey, system.UserConfig.AdminState)
 		}
 	}
 
@@ -685,7 +704,7 @@ func (aos *Aos) Start(acc telegraf.Accumulator) error {
 
 	ssl := &StreamAos{
 		Listener: l,
-		Aos: aos,
+		Aos:      aos,
 	}
 
 	// --------------------------------------------
@@ -723,11 +742,11 @@ func (aos *Aos) Stop() {
 func init() {
 	inputs.Add("aos", func() telegraf.Input {
 		return &Aos{
-			RefreshInterval:	 	30,
-			AosPort: 						443,
-			AosProtocol:				"https",
-			AosLogin:						"admin",
-			AosPassword: 				"admin",
+			RefreshInterval: 30,
+			AosPort:         443,
+			AosProtocol:     "https",
+			AosLogin:        "admin",
+			AosPassword:     "admin",
 		}
 	})
 }
